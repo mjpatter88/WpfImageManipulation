@@ -22,7 +22,7 @@
             </Border.Effect>
             <Image Grid.Row="1" Grid.Column="0" x:Name="imageDisplay" HorizontalAlignment="Left" Width="800" Height="550" Margin="0,0,0,0" VerticalAlignment="Top"/>
         </Border>
-        <Button Grid.Row="0" Grid.Column="1" Content="Load Image" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="150" Click="Button_Click_1" FontSize="16" Height="40"/>
+        <Button x:Name="Load" Grid.Row="0" Grid.Column="1" Content="Load Image" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="150" Click="Load_Click_1" FontSize="16" Height="40"/>
         <Label Grid.Row="0" Grid.Column="1" Content="Filter: " HorizontalAlignment="Left" Margin="10,93,0,0" VerticalAlignment="Top" FontSize="16"/>
         <ComboBox x:Name="FilterSelect" Grid.Row="0" Grid.Column="1" Margin="10,119,1,0" VerticalAlignment="Top" SelectionChanged="ComboBox_SelectionChanged">
             <ComboBoxItem Content="Black and White" FontSize="14"/>
@@ -31,10 +31,9 @@
             <ComboBoxItem Content="Voroni Sections" FontSize="14"/>
         </ComboBox>
         <Label Grid.Row="0" Grid.Column="1" Content="Options: " HorizontalAlignment="Left" Margin="10,150,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <Button x:Name="Apply" Grid.Row="0" Grid.Column="1" Content="Apply Filter" HorizontalAlignment="Left" Margin="10,0,0,225" VerticalAlignment="Bottom" Width="150" Height="40" FontSize="16" Click="Apply_Click" />
+        <Button Grid.Row="0" Grid.Column="1" Content="Undo Filter" HorizontalAlignment="Left" Margin="10,0,0,175" VerticalAlignment="Bottom" Width="150" Height="40" FontSize="16" />
         <Button Grid.Row="0" Grid.Column="1" Content="Save Image" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Bottom" Width="150" Height="40" FontSize="16" />
-
-
-
 
     </Grid>
 </Window>
