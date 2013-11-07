@@ -99,10 +99,33 @@ namespace WpfImageManipulation
                 case 0:
                     //Black and White filter
                     Console.WriteLine("Case 0 entered.");
+                    this.OptionsLabel.IsEnabled = false;
                     break;
                 case 1:
                     //Sobel Edge Detection filter
                     Console.WriteLine("Case 1 entered.");
+                    //Configure Sobel Options
+                    this.OptionsLabel.IsEnabled = true;
+                    RadioButton bw = new RadioButton();
+                    RadioButton color = new RadioButton();
+                    bw.GroupName = "Color Options";
+                    bw.Content = "Grayscale";
+                    bw.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                    bw.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+                    bw.Margin = new Thickness(10, 180, 0, 0);
+
+                    color.GroupName = "Color Options";
+                    color.Content = "Color";
+                    color.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                    color.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+                    color.Margin = new Thickness(90, 180, 0, 0);
+
+                    Grid.SetRow(bw, 0);
+                    Grid.SetColumn(bw, 1);
+                    Grid.SetRow(color, 0);
+                    Grid.SetColumn(color, 1);
+                    this.TopGrid.Children.Add(bw);
+                    this.TopGrid.Children.Add(color);
                     break;
                 case 2:
                     //Other Edge Detection filter
