@@ -32,6 +32,8 @@ namespace WpfImageManipulation
 
         private BitmapImage image;
         private WriteableBitmap filteredImage;
+        RadioButton blackWhite;
+        RadioButton color;
 
         public MainWindow()
         {
@@ -106,13 +108,13 @@ namespace WpfImageManipulation
                     Console.WriteLine("Case 1 entered.");
                     //Configure Sobel Options
                     this.OptionsLabel.IsEnabled = true;
-                    RadioButton bw = new RadioButton();
-                    RadioButton color = new RadioButton();
-                    bw.GroupName = "Color Options";
-                    bw.Content = "Grayscale";
-                    bw.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
-                    bw.VerticalAlignment = System.Windows.VerticalAlignment.Top;
-                    bw.Margin = new Thickness(10, 180, 0, 0);
+                    blackWhite = new RadioButton();
+                    color = new RadioButton();
+                    blackWhite.GroupName = "Color Options";
+                    blackWhite.Content = "Grayscale";
+                    blackWhite.HorizontalAlignment = System.Windows.HorizontalAlignment.Left;
+                    blackWhite.VerticalAlignment = System.Windows.VerticalAlignment.Top;
+                    blackWhite.Margin = new Thickness(10, 180, 0, 0);
 
                     color.GroupName = "Color Options";
                     color.Content = "Color";
@@ -120,11 +122,11 @@ namespace WpfImageManipulation
                     color.VerticalAlignment = System.Windows.VerticalAlignment.Top;
                     color.Margin = new Thickness(90, 180, 0, 0);
 
-                    Grid.SetRow(bw, 0);
-                    Grid.SetColumn(bw, 1);
+                    Grid.SetRow(blackWhite, 0);
+                    Grid.SetColumn(blackWhite, 1);
                     Grid.SetRow(color, 0);
                     Grid.SetColumn(color, 1);
-                    this.TopGrid.Children.Add(bw);
+                    this.TopGrid.Children.Add(blackWhite);
                     this.TopGrid.Children.Add(color);
                     break;
                 case 2:
@@ -152,6 +154,10 @@ namespace WpfImageManipulation
             {
                 MessageBox.Show("You must first select a filter.");
             }
+            else if(this.image == null)
+            {
+                MessageBox.Show("You must first select an image.");
+            }
             else
             {
                 //First create a writeable Bitmap from the image.
@@ -166,6 +172,14 @@ namespace WpfImageManipulation
                         break;
                     case 1:
                         //Sobel Edge Detection filter
+                        if((bool)this.blackWhite.IsChecked || (bool)this.color.IsChecked)
+                        {
+                            ApplyFilerSobel();
+                        }
+                        else
+                        {
+                            MessageBox.Show("You must first configure the filter options.");
+                        }
                         break;
                     case 2:
                         //Other Edge Detection filter
@@ -193,9 +207,9 @@ namespace WpfImageManipulation
             for (int i = 0; i < pixels.Length; i++)
             {
                 //Calculate each of the color components
-                int red = (pixels[i] & 0x00FF0000) >> 16;;
-                int green = (pixels[i] & 0x0000FF00) >> 8;
-                int blue = pixels[i] & 0x000000FF;
+                int red = getRed(pixels[i]); // (pixels[i] & 0x00FF0000) >> 16; ;
+                int green = getGreen(pixels[i]); // (pixels[i] & 0x0000FF00) >> 8;
+                int blue = getBlue(pixels[i]); // pixels[i] & 0x000000FF;
                 int intensity = (int)((0.3 * red) + (0.59 * green) + (0.11 * blue));
 
                 pixels[i] = intensity << 16;    //Red
@@ -205,6 +219,100 @@ namespace WpfImageManipulation
 
             this.filteredImage.WritePixels(new Int32Rect(0, 0, width, height), pixels, 4 * width, 0);
             imageDisplay.Source = this.filteredImage;
+        }
+
+        //Apply the Sobel Filter
+        // http://homepages.inf.ed.ac.uk/rbf/HIPR2/sobel.htm and many other websites
+        private void ApplyFilerSobel()
+        {
+            Console.WriteLine("Apply Sobel filter.");
+            if((bool)this.blackWhite.IsChecked)
+            {
+                ApplyFilterBW();
+            }
+
+            int height = image.PixelHeight;
+            int width = image.PixelWidth;
+
+            // Convert the image pixel data into a 2d array for easy processing
+            int[] pixelBytes = new int[width * height];
+            int[,] pixels = new int[height, width];
+            this.filteredImage.CopyPixels(pixelBytes, 4 * width, 0);
+            for (int row = 0; row < height; row++)
+            {
+                for(int col = 0; col < width; col++)
+                {
+                    pixels[row, col] = pixelBytes[row * width + col];
+                }
+            }
+
+            //Apply the filter to each pixel
+            // [ 1, 2, 1      [-1, 0, 1       [ 0,  2, 2
+            //   0, 0, 0   +   -2, 0, 2   =    -2,  0, 2
+            //  -1,-2,-1]      -1, 0, 1]       -2, -2, 0]
+            //Ignore each edge, since the pixels needed don't all exist.
+            for (int row = 1; row < height - 1; row++)
+            {
+                for (int col = 1; col < width - 1; col++)
+                {
+                    int red = Math.Abs(getRed(pixels[row - 1, col]-1) + 2*getRed(pixels[row-1, col]) + getRed(pixels[row-1,col+1]) - 
+                                       (getRed(pixels[row + 1, col-1]) + 2*getRed(pixels[row+1, col]) + getRed(pixels[row+1, col+1]))) 
+                        + 
+                        Math.Abs(-getRed(pixels[row - 1, col - 1]) + getRed(pixels[row - 1, col + 1]) +
+                                 -2*getRed(pixels[row, col-1]) + 2*getRed(pixels[row, col+1]) +
+                                 -getRed(pixels[row+1, col-1]) + getRed(pixels[row+1, col+1]));
+
+                    int green = Math.Abs(getGreen(pixels[row - 1, col] - 1) + 2 * getGreen(pixels[row - 1, col]) + getGreen(pixels[row - 1, col + 1]) -
+                                       (getGreen(pixels[row + 1, col - 1]) + 2 * getGreen(pixels[row + 1, col]) + getGreen(pixels[row + 1, col + 1])))
+                        +
+                        Math.Abs(-getGreen(pixels[row - 1, col - 1]) + getGreen(pixels[row - 1, col + 1]) +
+                                 -2 * getGreen(pixels[row, col - 1]) + 2 * getGreen(pixels[row, col + 1]) +
+                                 -getGreen(pixels[row + 1, col - 1]) + getGreen(pixels[row + 1, col + 1]));
+
+                    int blue = Math.Abs(getBlue(pixels[row - 1, col] - 1) + 2 * getBlue(pixels[row - 1, col]) + getBlue(pixels[row - 1, col + 1]) -
+                                       (getBlue(pixels[row + 1, col - 1]) + 2 * getBlue(pixels[row + 1, col]) + getBlue(pixels[row + 1, col + 1])))
+                        +
+                        Math.Abs(-getBlue(pixels[row - 1, col - 1]) + getBlue(pixels[row - 1, col + 1]) +
+                                 -2 * getBlue(pixels[row, col - 1]) + 2 * getBlue(pixels[row, col + 1]) +
+                                 -getBlue(pixels[row + 1, col - 1]) + getBlue(pixels[row + 1, col + 1]));
+
+
+                    //int red = getRed(pixels[row - 1, col]) * 2 + getRed(pixels[row - 1, col + 1]) * 2 +
+                    //    getRed(pixels[row, col - 1]) * (-2) + getRed(pixels[row, col + 1]) * 2 +
+                    //    getRed(pixels[row + 1, col - 1]) * (-2) + getRed(pixels[row + 1, col]) * (-2);
+
+                    //int green = getGreen(pixels[row - 1, col]) * 2 + getGreen(pixels[row - 1, col + 1]) * 2 +
+                    //    getGreen(pixels[row, col - 1]) * (-2) + getGreen(pixels[row, col + 1]) * 2 +
+                    //    getGreen(pixels[row + 1, col - 1]) * (-2) + getGreen(pixels[row + 1, col]) * (-2);
+
+                    //int blue = getBlue(pixels[row - 1, col]) * 2 + getBlue(pixels[row - 1, col + 1]) * 2 +
+                    //    getBlue(pixels[row, col - 1]) * (-2) + getBlue(pixels[row, col + 1]) * 2 +
+                    //    getBlue(pixels[row + 1, col - 1]) * (-2) + getBlue(pixels[row + 1, col]) * (-2);
+
+                    red = Math.Min(255, red);
+                    green = Math.Min(255, green);
+                    blue = Math.Min(255, blue);
+                    pixels[row, col] = red << 16;
+                    pixels[row, col] |= green << 8;
+                    pixels[row, col] |= blue;
+                    pixels[row, col] |= 0xFF << 24;
+                }
+            }
+            this.filteredImage.WritePixels(new Int32Rect(0, 0, width, height), pixels, 4 * width, 0);
+            imageDisplay.Source = this.filteredImage;
+        }
+
+        int getRed(int pixel)
+        {
+            return (pixel & 0x00FF0000) >> 16;
+        }
+        int getGreen(int pixel)
+        {
+            return (pixel & 0x0000FF00) >> 8;
+        }
+        int getBlue(int pixel)
+        {
+            return pixel & 0x000000FF;
         }
     }
 }
